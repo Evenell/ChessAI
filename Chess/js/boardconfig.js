@@ -1,8 +1,16 @@
 var board,
     game = new Chess();
 
-//AI Part
-var calculateBestMove = function(game) {
+/*
+ * AI Part
+ */
+var makeMove = function() {
+  var bestMove = calculateBestMove(3, game, -1000000, 1000000, true);
+  game.move(bestMove);
+  board.position(game.fen());
+}
+
+var calculateBestMove = function(depth, game, isMaximizingPlayer) {
   var newGameMoves = game.moves();
   var bestMove = null;
   var bestValue = -99999;
@@ -10,16 +18,50 @@ var calculateBestMove = function(game) {
     var newGameMove = newGameMoves[i];
     game.move(newGameMove);
 
-    var boardValue = -evaluateBoard(game);
+    var value = minimax(depth - 1, game, !isMaximizingPlayer);
     game.undo();
 
-    if (boardValue > bestValue) {
-      bestValue = boardValue;
+    if (value >= bestValue) {
+      bestValue = value;
       bestMove = newGameMove;
     }
   }
   return bestMove;
 }
+
+var minimax = function(depth, game, alpha, beta, isMaximizingPlayer) {
+  if (depth === 0) {
+    return -evaluateBoard(game);
+  }
+  var newGameMoves = game.moves();
+
+  if(isMaximizingPlayer) {
+    var bestMove = -99999;
+    for (var i = 0; i < newGameMoves.length; i++) {
+      game.move(newGameMoves[i]);
+      bestMove = Math.max(bestMove, minimax(depth - 1, game, alpha, beta, !isMaximizingPlayer));
+      game.undo();
+      alpha = Math.max(alpha, bestMove);
+      if (alpha >= beta) {
+        break;
+      }
+    }
+    return bestMove;
+  } else {
+    var bestMove = 99999;
+    for (var i = 0; i < newGameMoves.length; i++) {
+      game.move(newGameMoves[i]);
+      bestMove = Math.min(bestMove, minimax(depth - 1, game, alpha, beta, !isMaximizingPlayer));
+      game.undo();
+      beta = Math.min(beta, bestMove);
+      if (alpha >= beta) {
+        break;
+      }
+    }
+    return bestMove;
+  }
+}
+//Returns the score of the black player's pieces
 var evaluateBoard = function(game) {
   var total = 0;
   
@@ -37,23 +79,25 @@ var evaluateBoard = function(game) {
 
 var getPieceValue = function(string) {
   var pieceValue = {
-    'p' : 100,
-    'n' : 350,
-    'b' : 350,
-    'r' : 525,
-    'q' : 1000,
-    'k' : 10000
+    'p' : -100,
+    'n' : -350,
+    'b' : -350,
+    'r' : -525,
+    'q' : -1000,
+    'k' : -10000,
+    'P' : 100,
+    'N' : 350,
+    'B' : 350,
+    'R' : 525,
+    'Q' : 1000,
+    'K' : 10000
   };
   if (pieceValue.hasOwnProperty(string)) {
     return pieceValue[string];
   }
   else return 0;
 }
-var makeMove = function() {
-  var bestMove = calculateBestMove(game);
-  game.move(bestMove);
-  board.position(game.fen());
-}
+
 // Handles what to do after human makes move.
 // Computer automatically makes next move
 var onDrop = function(source, target) {
