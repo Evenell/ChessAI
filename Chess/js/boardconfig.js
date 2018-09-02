@@ -10,7 +10,7 @@ var makeMove = function() {
   board.position(game.fen());
 }
 
-var calculateBestMove = function(depth, game, isMaximizingPlayer) {
+var calculateBestMove = function(depth, game, alpha, beta, isMaximizingPlayer) {
   var newGameMoves = game.moves();
   var bestMove = null;
   var bestValue = -99999;
@@ -18,7 +18,7 @@ var calculateBestMove = function(depth, game, isMaximizingPlayer) {
     var newGameMove = newGameMoves[i];
     game.move(newGameMove);
 
-    var value = minimax(depth - 1, game, !isMaximizingPlayer);
+    var value = minimax(depth - 1, game, alpha, beta, !isMaximizingPlayer);
     game.undo();
 
     if (value >= bestValue) {
@@ -43,7 +43,7 @@ var minimax = function(depth, game, alpha, beta, isMaximizingPlayer) {
       game.undo();
       alpha = Math.max(alpha, bestMove);
       if (alpha >= beta) {
-        break;
+        return bestMove;
       }
     }
     return bestMove;
@@ -55,7 +55,7 @@ var minimax = function(depth, game, alpha, beta, isMaximizingPlayer) {
       game.undo();
       beta = Math.min(beta, bestMove);
       if (alpha >= beta) {
-        break;
+        return bestMove;
       }
     }
     return bestMove;
@@ -73,7 +73,6 @@ var evaluateBoard = function(game) {
     index++;
     curr = string.substring(index, index + 1);
   }
-  console.log(total);
   return total;
 }
 
@@ -112,7 +111,7 @@ var onDrop = function(source, target) {
   if (move === null) return 'snapback';
 
   // Log the move
-  console.log(move)
+  //console.log(move)
 
   // make move for black
   window.setTimeout(function() {
